@@ -479,7 +479,7 @@ function renderSalary(){
 
   // أعمدة الأيام
   const dayCols = [
-    'ايام الحضور','ايام حضور جمع',' عطلة رسمية','عطلة رسمية',
+    'ايام الحضور','ايام حضور جمع','عطلة رسمية',
     'ايام الاضافي','ساعات اضافي',
     'اجمالي ايام الغياب','ايام الغياب غ','ايام الغياب خ',
     'جزاءات البصمه','الاجازه','ايام التوقف','ايام المرضي'
@@ -534,9 +534,17 @@ function renderSalary(){
       const k=keys.find(k=>k.trim()===c.trim());
       return k && parseFloat(row[k]||0)>0;
     });
-    if(dayVals.length){
+    // إزالة التكرار
+    const dayValsSeen = new Set();
+    const dayValsUniq = dayVals.filter(c=>{
+      const key=c.trim();
+      if(dayValsSeen.has(key)) return false;
+      dayValsSeen.add(key);
+      return true;
+    });
+    if(dayValsUniq.length){
       h+='<div class="grid2" style="margin-bottom:10px;">';
-      dayVals.forEach(c=>{
+      dayValsUniq.forEach(c=>{
         const k=keys.find(k=>k.trim()===c.trim());
         const v=row[k];
         let color='#222';

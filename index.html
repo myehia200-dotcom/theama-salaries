@@ -451,12 +451,15 @@ function renderSalary(){
   const r = loggedUser.rows[0];
   const allKeys = Object.keys(r);
 
-  // اسم الموظف
   document.getElementById('emp-name-display').textContent = r['الاسم']||'الموظف';
 
-  // معلومات الموظف
-  const infoFields = ['الوظيفة','نوع الوظيفة','الفرع \ المصنع','فترة القبض','طريقة القبض'];
-  const infoVals = infoFields.map(f=>r[f]).filter(v=>v&&String(v).trim()&&String(v)!=='nan'&&String(v)!=='NaN'&&String(v)!=='undefined');
+  // معلومات الموظف في الهيدر
+  const infoVals = [
+    r['الوظيفة'],
+    r['الفرع \ المصنع'],
+    r['فترة القبض'],
+    r['طريقة القبض']
+  ].filter(v=>v&&String(v).trim()&&String(v)!=='nan'&&String(v)!=='NaN'&&String(v)!=='undefined');
   document.getElementById('emp-meta-display').textContent = infoVals.slice(0,3).join(' — ');
 
   const container = document.getElementById('months-container');
@@ -470,12 +473,35 @@ function renderSalary(){
     groups[period].push(row);
   });
 
-  // أعمدة التعريف - مخفية
-  const idCols = new Set(['كود الموظف','الاسم','الرقم القومى','الرقم القومي','نوع القبض']);
-  const infoCols = new Set(['الوظيفة','نوع الوظيفة','الفرع \ المصنع','فترة القبض','طريقة القبض','القطاع','موقف القبض']);
-  const dayCols = ['ايام الحضور','ايام حضور جمع','ايام حضور عطلة','ايام الاضافي','ساعات اضافي','اجمالي ايام الغياب','ايام الغياب غ','ايام الغياب خ','ايام الجزاء','الاجازه','ايام التوقف','ايام المرضي'];
-  const plusCols = ['الراتب الاساسي','الراتب المتغير','قيمة الاضافي','ساعات نهاري','ساعات ليلي','قيمة ساعات جمع وعطلات','عمولة','بدل انتقال','بدل طبيعة عمل','مأموريات','بدل طريق','وجبات','عيدية','مستحقات اخري 1','مستحقات اخري 2','عدد التطبيق','قيمة التطبيق'];
-  const minusCols = ['قيمة الغياب','جزاء الغياب','التاخيرات','قيمة المرضي','خصومات اخري','كسب عمل','عمولة البريد','ضريبة'];
+  // أعمدة ثابتة مخفية (لا تظهر في الكارد)
+  const hiddenCols = new Set([
+    'كود الموظف','الاسم','الرقم القومى','الرقم القومي','نوع القبض',
+    'الوظيفة','نوع الوظيفة','الفرع \ المصنع','فترة القبض','طريقة القبض','القطاع','موقف القبض'
+  ]);
+
+  // أعمدة الأيام
+  const dayCols = [
+    'ايام الحضور','ايام حضور جمع',' عطلة رسمية','عطلة رسمية',
+    'ايام الاضافي','ساعات اضافي',
+    'اجمالي ايام الغياب','ايام الغياب غ','ايام الغياب خ',
+    'جزاءات البصمه','الاجازه','ايام التوقف','ايام المرضي'
+  ];
+
+  // أعمدة المستحقات
+  const plusCols = [
+    'الراتب الاساسي','الراتب المتغير','قيمة الاضافي',
+    'ساعات نهاري','ساعات ليلي','قيمة ساعات جمع وعطلات',
+    'عمولة','بدل انتقال','بدل طبيعة عمل',
+    'مأموريات','بدل طريق','وجبات','عيدية',
+    'مستحقات اخري 1','مستحقات اخري 2',
+    'عدد التطبيق','قيمة التطبيق'
+  ];
+
+  // أعمدة الخصومات
+  const minusCols = [
+    'قيمة الغياب','قيمة جزاءات البصمه','التاخيرات',
+    'قيمة المرضي','خصومات اخري','كسب عمل','عمولة البريد','ضريبة'
+  ];
 
   Object.entries(groups).forEach(([period, rows])=>{
     const row = rows[0];
@@ -489,52 +515,66 @@ function renderSalary(){
     card.className='card';
     let h='';
 
-    // هيدر
+    // هيدر الكارد
     h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:12px;border-bottom:1px solid #eee;">';
     h+='<div style="display:flex;flex-wrap:wrap;gap:6px;">';
-    ['فترة القبض','طريقة القبض','نوع الوظيفة'].forEach(f=>{
-      const v=row[f];
-      if(v&&String(v).trim()&&String(v)!=='nan') h+='<span class="tag tag-gray">'+String(v).trim()+'</span>';
+    // تاجات المعلومات
+    [
+      {key:'فترة القبض', cls:'tag-blue'},
+      {key:'طريقة القبض', cls:'tag-gray'},
+      {key:'الوظيفة', cls:'tag-gray'},
+      {key:'الفرع \ المصنع', cls:'tag-gray'},
+    ].forEach(({key,cls})=>{
+      const v=row[key];
+      if(v&&String(v).trim()&&String(v)!=='nan'&&String(v)!=='NaN'){
+        h+='<span class="tag '+cls+'">'+String(v).trim()+'</span>';
+      }
     });
     h+='</div>';
-    h+='<div style="text-align:left;"><p style="font-size:11px;color:#888;margin-bottom:2px;">صافي المرتب</p><p class="net-amount">'+fmt(net)+' <span>جنيه</span></p></div></div>';
+    h+='<div style="text-align:left;"><p style="font-size:11px;color:#888;margin-bottom:2px;">صافي المرتب</p>';
+    h+='<p class="net-amount">'+fmt(net)+' <span>جنيه</span></p></div></div>';
 
     // أيام
     const dayVals = dayCols.filter(c=>{
-      const k=keys.find(k=>k.trim()===c);
+      const k=keys.find(k=>k.trim()===c.trim());
       return k && parseFloat(row[k]||0)>0;
     });
     if(dayVals.length){
       h+='<div class="grid2" style="margin-bottom:10px;">';
       dayVals.forEach(c=>{
-        const k=keys.find(k=>k.trim()===c);
+        const k=keys.find(k=>k.trim()===c.trim());
         const v=row[k];
         let color='#222';
         if(c.includes('غياب')||c.includes('جزاء')||c.includes('توقف')) color='#a32d2d';
-        if(c.includes('اجازه')||c.includes('حضور')||c.includes('مرضي')) color='#185fa5';
-        h+='<div class="mini-card"><p class="label">'+c+'</p><p class="val" style="color:'+color+';">'+v+'</p></div>';
+        if(c.includes('اجازه')||c.includes('حضور')||c.includes('عطلة')) color='#185fa5';
+        if(c.includes('مرضي')) color='#ba7517';
+        h+='<div class="mini-card"><p class="label">'+c.trim()+'</p><p class="val" style="color:'+color+';">'+v+'</p></div>';
       });
       h+='</div>';
     }
 
     // مستحقات وخصومات
-    const plusRows = plusCols.filter(c=>{const k=keys.find(k=>k.trim()===c);return k&&parseFloat(row[k]||0)>0;});
-    const minusRows = minusCols.filter(c=>{const k=keys.find(k=>k.trim()===c);return k&&parseFloat(row[k]||0)>0;});
+    const plusRows = plusCols.filter(c=>{const k=keys.find(k=>k.trim()===c.trim());return k&&parseFloat(row[k]||0)>0;});
+    const minusRows = minusCols.filter(c=>{const k=keys.find(k=>k.trim()===c.trim());return k&&parseFloat(row[k]||0)>0;});
 
     if(plusRows.length||minusRows.length){
       h+='<div class="grid2-text" style="margin-bottom:10px;">';
       h+='<div><p class="section-title">المستحقات</p>';
-      plusRows.forEach(c=>{const k=keys.find(k=>k.trim()===c);h+=row2(c,fmt(row[k])+' جنيه','#3b6d11');});
+      plusRows.forEach(c=>{const k=keys.find(k=>k.trim()===c.trim());h+=row2(c.trim(),fmt(row[k])+' جنيه','#3b6d11');});
       h+='</div>';
       h+='<div><p class="section-title">الخصومات</p>';
-      minusRows.forEach(c=>{const k=keys.find(k=>k.trim()===c);h+=row2(c,'-'+fmt(row[k])+' جنيه','#a32d2d');});
+      minusRows.forEach(c=>{const k=keys.find(k=>k.trim()===c.trim());h+=row2(c.trim(),'-'+fmt(row[k])+' جنيه','#a32d2d');});
       h+='</div></div>';
     }
 
     // ملخص
     h+='<div class="grid2">';
-    if(grossKey&&parseFloat(row[grossKey]||0)) h+='<div class="summary-card summary-gray"><p class="slbl">'+grossKey.trim()+'</p><p class="sval">'+fmt(row[grossKey])+' جنيه</p></div>';
-    if(netKey) h+='<div class="summary-card summary-green"><p class="slbl">'+netKey.trim()+'</p><p class="sval">'+fmt(net)+' جنيه</p></div>';
+    if(grossKey&&parseFloat(row[grossKey]||0)){
+      h+='<div class="summary-card summary-gray"><p class="slbl">'+grossKey.trim()+'</p><p class="sval">'+fmt(row[grossKey])+' جنيه</p></div>';
+    }
+    if(netKey){
+      h+='<div class="summary-card summary-green"><p class="slbl">'+netKey.trim()+'</p><p class="sval">'+fmt(net)+' جنيه</p></div>';
+    }
     h+='</div>';
 
     card.innerHTML=h;
@@ -542,7 +582,6 @@ function renderSalary(){
   });
 }
 
-// ===== خروج =====
 function doLogout(){
   loggedUser=null;
   showScreen('login-screen');
